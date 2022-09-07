@@ -26,6 +26,7 @@ struct GameState {
     pub dimension: Vec2,
     pub player: PlayerState,
     pub food: Vec2,
+    pub has_lost: bool
 }
 
 impl GameState {
@@ -33,7 +34,8 @@ impl GameState {
             Self {
                 dimension: dim,
                 player: PlayerState { snake: VecDeque::from(vec![Vec2::xy(dim.x/2, dim.y/2)]), direction: Direction::Right },
-                food: Self::rand_food_position(dim)
+                food: Self::rand_food_position(dim),
+                has_lost: false
             }
         }
 
@@ -46,6 +48,14 @@ impl GameState {
                 Direction::Left => { front + Vec2::xy(-1,0) },
                 Direction::Right => { front + Vec2::xy(1,0) }
             };
+
+            // If the snake ran over itself, trigger loss
+            if self.player.snake.contains(&updated_front) {
+                self.has_lost = true;
+            }
+
+            // If the snake hit the boundary, trigger loss
+
 
             
             self.player.snake.push_front(updated_front);    
@@ -97,16 +107,36 @@ fn main() {
             state.update();
         }
 
+        let mut pencil = Pencil::new(window.canvas_mut());
+
+        
+
+        if state.has_lost {
+            let you_lose_msg = &format!("You Lose! Score: {}", state.player.snake.len());
+            pencil
+                .draw_text(&format!("FPS: {}", fps_counter.count()), Vec2::xy(0, 0))
+                .set_origin(Vec2::xy((win_size.x - you_lose_msg.len() as i32) / 2, (win_size.y - state.dimension.y) / 2 - 1))
+                .draw_text(you_lose_msg, Vec2::xy(0, 0));
+            return;
+        }
+
         let score_msg = &format!("Score: {}", state.player.snake.len());
 
-        let mut pencil = Pencil::new(window.canvas_mut());
+        pencil
+        .draw_text(&format!("FPS: {}", fps_counter.count()), Vec2::xy(0, 0))
+        .set_origin(Vec2::xy((win_size.x - score_msg.len() as i32) / 2, (win_size.y - state.dimension.y) / 2 - 1))
+        .draw_text(score_msg, Vec2::xy(0, 0));
+
 
         pencil
             .draw_text(&format!("FPS: {}", fps_counter.count()), Vec2::xy(0, 0))
             .set_origin(Vec2::xy((win_size.x - score_msg.len() as i32) / 2, (win_size.y - state.dimension.y) / 2 - 1))
             .draw_text(score_msg, Vec2::xy(0, 0))
             .set_origin((win_size - state.dimension) / 2)
+            .draw_rect(&RectCharset::simple_round_lines(), Vec2::zero(), state.dimension)
+            .set_origin((win_size - state.dimension) / 2)
             .draw_char('o', state.food);
+
 
         for snake_link in state.player.snake.iter() {
             pencil.draw_char('▒', *snake_link);
