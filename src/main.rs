@@ -1,0 +1,115 @@
+use std::collections::VecDeque;
+
+use rand::Rng;
+use ruscii::app::{App, State};
+use ruscii::terminal::{Window};
+use ruscii::drawing::{Pencil, RectCharset};
+use ruscii::keyboard::{KeyEvent, Key};
+use ruscii::spatial::{Vec2};
+use ruscii::gui::{FPSCounter};
+
+const PAD_HEIGHT: i32 = 3;
+
+enum Direction {
+    Up,
+    Down,
+    Left,
+    Right
+}
+
+struct PlayerState {
+    pub snake: VecDeque<Vec2>,
+    pub direction: Direction
+}
+
+struct GameState {
+    pub dimension: Vec2,
+    pub player: PlayerState,
+    pub food: Vec2,
+}
+
+impl GameState {
+        pub fn new(dim: Vec2) -> Self {
+            Self {
+                dimension: dim,
+                player: PlayerState { snake: VecDeque::from(vec![Vec2::xy(dim.x/2, dim.y/2)]), direction: Direction::Right },
+                food: Self::rand_food_position(dim)
+            }
+        }
+
+        pub fn update(&mut self) {
+            let front  = *self.player.snake.front().unwrap();
+
+            let updated_front = match self.player.direction {
+                Direction::Up => { front + Vec2::xy(0,-1) },
+                Direction::Down => { front + Vec2::xy(0,1) },
+                Direction::Left => { front + Vec2::xy(-1,0) },
+                Direction::Right => { front + Vec2::xy(1,0) }
+            };
+
+            
+            self.player.snake.push_front(updated_front);    
+
+            if updated_front == self.food {
+                self.food = Self::rand_food_position(self.dimension);
+            } else {
+                self.player.snake.pop_back();
+            }
+      
+        }
+
+        fn rand_food_position(dim: Vec2) -> Vec2 {
+            let mut rng = rand::thread_rng();
+            Vec2::xy(rng.gen_range(0..dim.x), rng.gen_range(0..dim.y))
+        }
+}
+
+fn main() {
+    let mut fps_counter = FPSCounter::new();
+    let mut app = App::new();
+    let win_size = app.window().size();
+    let mut state = GameState::new((win_size * 4) / 5);
+
+    app.run(|app_state: &mut State, window: &mut Window| {
+
+        for key_event in app_state.keyboard().last_key_events() {
+            eprintln!("HIT");
+            match key_event {
+                KeyEvent::Pressed(Key::Esc) => app_state.stop(),
+                KeyEvent::Pressed(Key::Q) => app_state.stop(),
+                _ => (),
+            }
+        }
+
+        for key_down in app_state.keyboard().get_keys_down() {
+            match key_down {
+                Key::W => state.player.direction = Direction::Up,
+                Key::S => state.player.direction = Direction::Down,
+                Key::A => state.player.direction = Direction::Left,
+                Key::D => state.player.direction = Direction::Right,
+                _ => (),
+            }
+        }
+
+        fps_counter.update();
+
+        if app_state.step() % 2 == 0 {
+            state.update();
+        }
+
+        let score_msg = &format!("Score: {}", state.player.snake.len());
+
+        let mut pencil = Pencil::new(window.canvas_mut());
+
+        pencil
+            .draw_text(&format!("FPS: {}", fps_counter.count()), Vec2::xy(0, 0))
+            .set_origin(Vec2::xy((win_size.x - score_msg.len() as i32) / 2, (win_size.y - state.dimension.y) / 2 - 1))
+            .draw_text(score_msg, Vec2::xy(0, 0))
+            .set_origin((win_size - state.dimension) / 2)
+            .draw_char('o', state.food);
+
+        for snake_link in state.player.snake.iter() {
+            pencil.draw_char('▒', *snake_link);
+        }
+    });
+}
