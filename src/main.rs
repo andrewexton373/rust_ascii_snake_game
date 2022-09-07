@@ -55,7 +55,14 @@ impl GameState {
             }
 
             // If the snake hit the boundary, trigger loss
-
+            if (
+                updated_front.x < 0 ||
+                updated_front.y < 0 ||
+                updated_front.x >= self.dimension.x ||
+                updated_front.y >= self.dimension.y
+             ) {
+                self.has_lost = true;
+            }
 
             
             self.player.snake.push_front(updated_front);    
@@ -70,7 +77,7 @@ impl GameState {
 
         fn rand_food_position(dim: Vec2) -> Vec2 {
             let mut rng = rand::thread_rng();
-            Vec2::xy(rng.gen_range(0..dim.x), rng.gen_range(0..dim.y))
+            Vec2::xy(rng.gen_range(1..dim.x - 1), rng.gen_range(1..dim.y - 1))
         }
 }
 
