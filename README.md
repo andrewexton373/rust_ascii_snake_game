@@ -1,0 +1,1 @@
+This is the traditional snake game written in Rust. It uses ruscii to output ascii to the terminal for the game's rendering.
