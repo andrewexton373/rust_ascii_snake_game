@@ -8,8 +8,6 @@ use ruscii::keyboard::{KeyEvent, Key};
 use ruscii::spatial::{Vec2};
 use ruscii::gui::{FPSCounter};
 
-const PAD_HEIGHT: i32 = 3;
-
 enum Direction {
     Up,
     Down,
@@ -118,6 +116,8 @@ fn main() {
 
         if state.has_lost {
             let you_lose_msg = &format!("You Lose! Score: {} | Press \"R\" to Restart", state.player.snake.len());
+            
+            // Draw You Lose Message
             pencil
                 .set_origin(Vec2::xy((win_size.x - you_lose_msg.len() as i32) / 2, (win_size.y - state.dimension.y) / 2 - 1))
                 .draw_text(you_lose_msg, Vec2::xy(0, 0));
@@ -126,22 +126,24 @@ fn main() {
 
         let score_msg = &format!("Score: {}", state.player.snake.len());
 
+        // Draw FPS and Score
         pencil
         .draw_text(&format!("FPS: {}", fps_counter.count()), Vec2::xy(0, 0))
         .set_origin(Vec2::xy((win_size.x - score_msg.len() as i32) / 2, (win_size.y - state.dimension.y) / 2 - 1))
         .draw_text(score_msg, Vec2::xy(0, 0));
 
-
+        // Draw Boundary
         pencil
-            .draw_text(&format!("FPS: {}", fps_counter.count()), Vec2::xy(0, 0))
-            .set_origin(Vec2::xy((win_size.x - score_msg.len() as i32) / 2, (win_size.y - state.dimension.y) / 2 - 1))
-            .draw_text(score_msg, Vec2::xy(0, 0))
             .set_origin((win_size - state.dimension) / 2)
-            .draw_rect(&RectCharset::simple_round_lines(), Vec2::zero(), state.dimension)
+            .draw_rect(&RectCharset::simple_round_lines(), Vec2::zero(), state.dimension);
+
+        // Draw food
+        pencil
             .set_origin((win_size - state.dimension) / 2)
             .draw_char('o', state.food);
 
 
+        // Draw Snake
         for snake_link in state.player.snake.iter() {
             pencil.draw_char('▒', *snake_link);
         }
