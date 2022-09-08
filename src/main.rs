@@ -90,10 +90,10 @@ fn main() {
     app.run(|app_state: &mut State, window: &mut Window| {
 
         for key_event in app_state.keyboard().last_key_events() {
-            eprintln!("HIT");
             match key_event {
                 KeyEvent::Pressed(Key::Esc) => app_state.stop(),
                 KeyEvent::Pressed(Key::Q) => app_state.stop(),
+                KeyEvent::Pressed(Key::R) => { state = GameState::new((win_size * 4) / 5) },
                 _ => (),
             }
         }
@@ -116,12 +116,9 @@ fn main() {
 
         let mut pencil = Pencil::new(window.canvas_mut());
 
-        
-
         if state.has_lost {
-            let you_lose_msg = &format!("You Lose! Score: {}", state.player.snake.len());
+            let you_lose_msg = &format!("You Lose! Score: {} | Press \"R\" to Restart", state.player.snake.len());
             pencil
-                .draw_text(&format!("FPS: {}", fps_counter.count()), Vec2::xy(0, 0))
                 .set_origin(Vec2::xy((win_size.x - you_lose_msg.len() as i32) / 2, (win_size.y - state.dimension.y) / 2 - 1))
                 .draw_text(you_lose_msg, Vec2::xy(0, 0));
             return;
