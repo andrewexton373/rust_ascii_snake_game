@@ -53,12 +53,12 @@ impl GameState {
             }
 
             // If the snake hit the boundary, trigger loss
-            if (
+            if
                 updated_front.x < 0 ||
                 updated_front.y < 0 ||
                 updated_front.x >= self.dimension.x ||
                 updated_front.y >= self.dimension.y
-             ) {
+            {
                 self.has_lost = true;
             }
 
